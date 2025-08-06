@@ -1,6 +1,4 @@
 # Static Blog
 
-日本語 | English
-
-Static Blogとは？
-- github pageでもブログを作成できるツールです。
+github pageでもブログを作成できるツールです。
+web開発初心者が作ったので使い勝手は悪いです
