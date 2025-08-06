@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texturer</title>
+    <link rel="stylesheet" href="./index.css"/>
+</head>
+<body>
+
+    <div id="workspace">
+        <div id="upbar">
+            <p id="barfi">ファイル</p>
+        </div>
+        <div class="newbu">
+            </div>
+    <div id="custom-menu">
+        <ul>
+            <li data-action="new">新規</li>
+            <div class="separator"></div>
+        </ul>
+    </div>
+    <div id="file">
+        <ul>
+            <li data-action="new">新規</li>
+            <div class="separator"></div>
+            <li data-action="load">読み込み</li>
+            <div class="separator"></div>
+            <li data-action="mcdl">MCPACK化してダウンロード</li>
+            <li data-action="zipdl">ZIPでダウンロード</li>
+            <div class="separator"></div>
+        </ul>
+    </div>
+
+    <dialog id="log" class="dialog" style="display: none;">
+    <div id="loghai">
+    <div id="dialog-container">
+        <header>
+            <span class="dekkalog">新規作成</span>
+            <button id="close" type="button" class="logtozi">
+                <div class="tozitozi"></div>
+            </button>
+        </header>
+        <div id="clog"></div>
+    </div>
+    </div>
+  </dialog>
+    
+
+    <script>
+
+
+  const log = document.getElementById('log');
+
+  log.addEventListener('click', (event) => {
+  if(event.target.closest('#loghai')) {
+    log.style.display = "none";
+    log.close();
+  }
+});
+
+
+  async function open() {
+    log.showModal();
+    log.style.display = "block";
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  const closeButton = document.getElementById('close');
+
+  closeButton?.addEventListener('click', () => {
+    log.style.display = "none";
+    log.close();
+    document.documentElement.removeAttribute("style");
+  });
+
+
+
+
+
+
+
+
+        const workspace = document.getElementById('workspace');
+        const menu = document.getElementById('custom-menu');
+        const f = document.getElementById('barfi');
+        const fi = document.getElementById('file');
+
+
+
+        fi.addEventListener('click', (e) => {
+            if (e.target.tagName === 'LI') {
+                const action = e.target.getAttribute('data-action');
+                if (action === "new") {
+                    open()
+                }
+                menu.classList.remove('show');
+            }
+        });
+
+
+        f.addEventListener('click', (e) => {
+            console.log("aaa")
+            e.preventDefault();
+            const { clientX: mouseX, clientY: mouseY } = e;
+            const { normalizedX, normalizedY } = normalizePosition(mouseX, mouseY);
+            
+            fi.style.top = `${normalizedY}px`;
+            fi.style.left = `${normalizedX}px`;
+            fi.classList.add('show');
+         });
+
+        workspace.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+
+            const { clientX: mouseX, clientY: mouseY } = e;
+            const { normalizedX, normalizedY } = normalizePosition(mouseX, mouseY);
+            
+            menu.style.top = `${normalizedY}px`;
+            menu.style.left = `${normalizedX}px`;
+            
+
+            menu.classList.add('show');
+        });
+
+        document.addEventListener('click', (e) => {
+
+            if (!menu.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+            if (!f.contains(e.target)) {
+                fi.classList.remove('show');
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                menu.classList.remove('show');
+            }
+        });
+
+        function normalizePosition(mouseX, mouseY) {
+            const menuWidth = menu.offsetWidth;
+            const menuHeight = menu.offsetHeight;
+            const scopeWidth = window.innerWidth;
+            const scopeHeight = window.innerHeight;
+            
+            let normalizedX = mouseX;
+            let normalizedY = mouseY;
+            
+            if ((mouseX + menuWidth) > scopeWidth) {
+                normalizedX = scopeWidth - menuWidth;
+            }
+            if ((mouseY + menuHeight) > scopeHeight) {
+                normalizedY = scopeHeight - menuHeight;
+            }
+            
+            return { normalizedX, normalizedY };
+        }
+
+        menu.addEventListener('click', (e) => {
+            if (e.target.tagName === 'LI') {
+                const action = e.target.getAttribute('data-action');
+                if (action === "new") {
+                    open()
+                }
+                menu.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
