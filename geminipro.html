@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIデータセット作成ツール</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* paddingを含めた幅計算に */
+            min-height: 100px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            background-color: #007bff;
+            cursor: pointer;
+            font-size: 16px;
+            flex-grow: 1;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #clear-btn {
+            background-color: #6c757d;
+        }
+        #clear-btn:hover {
+            background-color: #5a6268;
+        }
+        #download-btn {
+            background-color: #28a745;
+        }
+        #download-btn:hover {
+            background-color: #218838;
+        }
+        #result-area {
+            margin-top: 20px;
+        }
+        #result-json {
+            min-height: 200px;
+            background-color: #e9ecef;
+        }
+        #counter {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AIデータセット作成ツール</h1>
+        <p>AIのファインチューニングに使用するJSON形式のデータセットを簡単に作成できます。</p>
+
+        <div class="form-group">
+            <label for="instruction">指示 (Instruction)</label>
+            <textarea id="instruction" placeholder="AIへの指示や質問を入力します。例：JavaScriptで配列の各要素を2倍にする方法を教えて。"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="input">入力 (Input) - (任意)</label>
+            <textarea id="input" placeholder="指示に追加する文脈やコードを入力します。例：[1, 2, 3, 4, 5]"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="output">出力 (Output)</label>
+            <textarea id="output" placeholder="AIに生成させたい理想的な回答を入力します。例：mapメソッドを使用します。 const doubled = [1, 2, 3, 4, 5].map(num => num * 2);"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button id="add-btn">データセットに追加</button>
+            <button id="clear-btn">入力欄をクリア</button>
+        </div>
+
+        <div id="counter">追加されたデータ数: 0</div>
+
+        <div id="result-area">
+            <h2>生成されたJSONデータ</h2>
+            <div class="button-group">
+                <button id="download-btn">JSONファイルをダウンロード</button>
+            </div>
+            <textarea id="result-json" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const instructionEl = document.getElementById('instruction');
+        const inputEl = document.getElementById('input');
+        const outputEl = document.getElementById('output');
+        const addBtn = document.getElementById('add-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const resultJsonEl = document.getElementById('result-json');
+        const counterEl = document.getElementById('counter');
+
+        // データセットを保存する配列
+        let dataset = [];
+
+        // 「データセットに追加」ボタンの処理
+        addBtn.addEventListener('click', () => {
+            const instruction = instructionEl.value.trim();
+            const input = inputEl.value.trim();
+            const output = outputEl.value.trim();
+
+            // 指示と出力は必須項目
+            if (!instruction || !output) {
+                alert('「指示」と「出力」は必須です。');
+                return;
+            }
+
+            // 新しいデータオブジェクトを作成
+            const newData = {
+                instruction: instruction,
+                input: input,
+                output: output
+            };
+
+            // 配列にデータを追加
+            dataset.push(newData);
+
+            // 追加後にJSON出力を更新
+            updateResult();
+            
+            // カウンターを更新
+            updateCounter();
+            
+            alert('データが1件追加されました！');
+            
+            // 入力欄をクリアして次の入力をしやすくする
+            clearInputs();
+        });
+        
+        // 「入力欄をクリア」ボタンの処理
+        clearBtn.addEventListener('click', clearInputs);
+
+        // 「JSONファイルをダウンロード」ボタンの処理
+        downloadBtn.addEventListener('click', () => {
+            if (dataset.length === 0) {
+                alert('ダウンロードするデータがありません。');
+                return;
+            }
+
+            // データセットをJSON文字列に変換
+            const jsonString = JSON.stringify(dataset, null, 2);
+            
+            // Blobオブジェクトを作成
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            
+            // ダウンロード用のURLを生成
+            const url = URL.createObjectURL(blob);
+            
+            // aタグを生成してダウンロードを実行
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dataset.json';
+            document.body.appendChild(a);
+            a.click();
+            
+            // 後片付け
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // 入力欄をクリアする関数
+        function clearInputs() {
+            instructionEl.value = '';
+            inputEl.value = '';
+            outputEl.value = '';
+        }
+        
+        // 結果表示エリアを更新する関数
+        function updateResult() {
+            if (dataset.length > 0) {
+                // 配列を整形されたJSON文字列に変換して表示
+                resultJsonEl.value = JSON.stringify(dataset, null, 2);
+            } else {
+                resultJsonEl.value = '';
+            }
+        }
+        
+        // カウンターを更新する関数
+        function updateCounter() {
+            counterEl.textContent = `追加されたデータ数: ${dataset.length}`;
+        }
+    </script>
+
+</body>
+</html>
